@@ -30,17 +30,47 @@ namespace PinballConsole
             Title = "IFPA";
 
 
-            var players = Task.Run(() => pinballRankingApiV2.GetWpprRanking()).Result; 
-
-            ListView = new ListView(players.Rankings.Select(n => n.FirstName + " " + n.LastName).ToList())
+            var players = Task.Run(() => pinballRankingApiV2.GetWpprRanking()).Result;
+            var listViewDataSource = new RankingDataSource(players.Rankings.ToList());
+            ListView = new ListView(listViewDataSource)
             {
                 X = 0,
                 Y = 0,
                 Height = Dim.Fill(2),
-                Width = Dim.Percent(40)
-            }; ;
+                Width = Dim.Percent(40)      
+                
+            };
 
             Add(ListView);
+
+
+            var _scrollBar = new ScrollBarView(ListView, true);
+
+            _scrollBar.ChangedPosition += () => {
+                ListView.TopItem = _scrollBar.Position;
+                if (ListView.TopItem != _scrollBar.Position)
+                {
+                    _scrollBar.Position = ListView.TopItem;
+                }
+                ListView.SetNeedsDisplay();
+            };
+
+            _scrollBar.OtherScrollBarView.ChangedPosition += () => {
+                ListView.LeftItem = _scrollBar.OtherScrollBarView.Position;
+                if (ListView.LeftItem != _scrollBar.OtherScrollBarView.Position)
+                {
+                    _scrollBar.OtherScrollBarView.Position = ListView.LeftItem;
+                }
+                ListView.SetNeedsDisplay();
+            };
+
+            ListView.DrawContent += (e) => {
+                _scrollBar.Size = ListView.Source.Count - 1;
+                _scrollBar.Position = ListView.TopItem;
+                _scrollBar.OtherScrollBarView.Size = ListView.Maxlength - 1;
+                _scrollBar.OtherScrollBarView.Position = ListView.LeftItem;
+                _scrollBar.Refresh();
+            };
         }
 
         public override async void OnLoaded()
