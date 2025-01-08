@@ -1,14 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
-using PinballApi;
-using PinballApi.Extensions;
-using PinballApi.Models.WPPR.v2.Rankings;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PinballApi.Extensions;
+using PinballApi.Models.WPPR.Universal.Rankings;
 using Terminal.Gui;
 
 namespace PinballConsole
@@ -17,24 +8,11 @@ namespace PinballConsole
     {
         ListView ListView { get; set; }
 
-        PinballRankingApiV2 pinballRankingApiV2 { get; set; }
-
-        public MainWindow()
+        public MainWindow(RankingDataSource rankingDataSource)
         {
-            //TODO: move this into a ViewModel
-            IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
-                .AddEnvironmentVariables()
-                .Build();
-
-            AppSettings settings = config.GetRequiredSection("AppSettings").Get<AppSettings>();
-
-            pinballRankingApiV2 = new PinballRankingApiV2(settings.IfpaApiKey);
-
             Title = "IFPA";
 
-            var players = Task.Run(() => pinballRankingApiV2.GetWpprRanking()).Result;
-            var listViewDataSource = new RankingDataSource(players.Rankings.ToList());
+            var listViewDataSource = rankingDataSource;
             ListView = new ListView(listViewDataSource)
             {
                 X = 0,
@@ -143,8 +121,8 @@ namespace PinballConsole
 
             ListView.SelectedItemChanged += (e) =>
             {
-                var player = (RankingResult)e.Value;
-                rightPane.Title = $"{player.FirstName} {player.LastName}";
+                var player = (Ranking)e.Value;
+                rightPane.Title = $"{player.Name}";
                 rankLabel.Text = "Rank: " + player.CurrentRank.OrdinalSuffix();
             };
 

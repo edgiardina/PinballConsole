@@ -1,25 +1,28 @@
 ﻿using NStack;
 using PinballApi.Extensions;
-using PinballApi.Models.WPPR.v2.Rankings;
-using System;
+using PinballApi.Interfaces;
+using PinballApi.Models.WPPR.Universal.Rankings;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terminal.Gui;
 
 namespace PinballConsole
 {
     // This is basically the same implementation used by the UICatalog main window
-    internal class RankingDataSource : IListDataSource
+    public class RankingDataSource : IListDataSource
     {
         int _rankColumnWidth = 10;
-        private List<RankingResult> rankingResults;
+        private List<Ranking> rankingResults;
         BitArray marks;
         int count, len;
 
-        public List<RankingResult> RankingResults
+        public RankingDataSource(IPinballRankingApi pinballRankingApi)
+        {
+            PinballRankingApi = pinballRankingApi;
+        }
+
+        IPinballRankingApi PinballRankingApi { get; set; }
+
+        public List<Ranking> RankingResults
         {
             get => rankingResults;
             set
@@ -44,14 +47,13 @@ namespace PinballConsole
 
         public int Length => len;
 
-        public RankingDataSource(List<RankingResult> itemList) => RankingResults = itemList;
 
         public void Render(ListView container, ConsoleDriver driver, bool selected, int item, int col, int line, int width, int start = 0)
         {
             container.Move(col, line);
             // Equivalent to an interpolated string like $"{Scenarios[item].Name, -widtestname}"; if such a thing were possible
             var s = String.Format(String.Format("{{0,{0}}}", -_rankColumnWidth), RankingResults[item].CurrentRank.OrdinalSuffix());
-            RenderUstr(driver, $"{s} {RankingResults[item].FirstName} {RankingResults[item].LastName}", col, line, width, start);
+            RenderUstr(driver, $"{s} {RankingResults[item].Name}", col, line, width, start);
         }
 
         public void SetMark(int item, bool value)
@@ -71,7 +73,7 @@ namespace PinballConsole
             for (int i = 0; i < rankingResults.Count; i++)
             {
                 var s = String.Format(String.Format("{{0,{0}}}", -_rankColumnWidth), RankingResults[i].CurrentRank.OrdinalSuffix());
-                var sc = $"{s} {RankingResults[i].FirstName} {RankingResults[i].LastName}";
+                var sc = $"{s} {RankingResults[i].Name}";
                 var l = sc.Length;
                 if (l > maxLength)
                 {
@@ -106,6 +108,8 @@ namespace PinballConsole
 
         public IList ToList()
         {
+            var players = Task.Run(() => PinballRankingApi.RankingSearch(RankingType.Wppr)).Result;
+            RankingResults = players.Rankings.ToList();
             return RankingResults;
         }
     }
