@@ -11,8 +11,8 @@ using Terminal.Gui;
 
 namespace PinballConsole
 {
-   // This is basically the same implementation used by the UICatalog main window
-        internal class RankingDataSource : IListDataSource
+    // This is basically the same implementation used by the UICatalog main window
+    internal class RankingDataSource : IListDataSource
     {
         int _rankColumnWidth = 10;
         private List<RankingResult> rankingResults;
@@ -50,7 +50,7 @@ namespace PinballConsole
         {
             container.Move(col, line);
             // Equivalent to an interpolated string like $"{Scenarios[item].Name, -widtestname}"; if such a thing were possible
-            var s = String.Format(String.Format("{{0,{0}}}", -_rankColumnWidth), RankingResults[item].CurrentRank);
+            var s = String.Format(String.Format("{{0,{0}}}", -_rankColumnWidth), RankingResults[item].CurrentRank.OrdinalSuffix());
             RenderUstr(driver, $"{s} {RankingResults[item].FirstName} {RankingResults[item].LastName}", col, line, width, start);
         }
 
